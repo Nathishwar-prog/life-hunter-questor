@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import QuestCard from '@/components/QuestCard';
 import { useHunter } from '@/context/HunterContext';
 import { Button } from '@/components/ui/button';
-import { FilterX, Filter, RotateCcw, Sparkles, Award, Trophy, Clock } from 'lucide-react';
+import { FilterX, Filter, RotateCcw, Sparkles, Award, Trophy, Clock, Mic, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
   Dialog, 
@@ -17,13 +16,16 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { speak } from '@/utils/voiceAssistant';
+import VoiceAssistantSettings from '@/components/VoiceAssistantSettings';
 
 const Quests = () => {
-  const { quests, completeQuest, refreshQuests } = useHunter();
+  const { quests, completeQuest, refreshQuests, hunterName } = useHunter();
   const [filter, setFilter] = useState<string | null>(null);
   const [showRefreshDialog, setShowRefreshDialog] = useState(false);
   const [animateProgress, setAnimateProgress] = useState(false);
   const [progressValue, setProgressValue] = useState(0);
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
 
   const filteredQuests = filter
     ? quests.filter((quest) => quest.category === filter || 
@@ -33,8 +35,7 @@ const Quests = () => {
 
   const activeQuests = quests.filter(quest => !quest.completed);
   const completedQuests = quests.filter(quest => quest.completed);
-  
-  // Calculate daily progress
+
   useEffect(() => {
     const total = quests.length;
     const completed = completedQuests.length;
@@ -50,6 +51,16 @@ const Quests = () => {
     return () => clearTimeout(timer);
   }, [quests, completedQuests.length]);
 
+  useEffect(() => {
+    const completedCount = quests.filter(quest => quest.completed).length;
+    const totalCount = quests.length;
+    
+    if (hunterName) {
+      const welcomeMessage = `Welcome to your Quests page, Hunter ${hunterName}. You have completed ${completedCount} out of ${totalCount} quests.`;
+      speak(welcomeMessage, true);
+    }
+  }, []);
+
   const handleRefreshQuests = () => {
     refreshQuests();
     setShowRefreshDialog(false);
@@ -62,8 +73,10 @@ const Quests = () => {
   const handleFilterClick = (filterValue: string | null) => {
     if (filter === filterValue) {
       setFilter(null);
+      speak(`Showing all quests`);
     } else {
       setFilter(filterValue);
+      speak(`Filtering quests by ${filterValue || 'all'}`);
       toast(`Filter applied: ${filterValue || 'All Quests'}`, {
         description: 'Showing filtered quest results',
         duration: 2000,
@@ -71,9 +84,20 @@ const Quests = () => {
     }
   };
 
+  const toggleVoiceSettings = () => {
+    setShowVoiceSettings(true);
+  };
+
   return (
     <Layout title="Daily Quests">
-      {/* Daily Progress Card */}
+      <Button
+        onClick={toggleVoiceSettings}
+        className="fixed bottom-6 right-6 rounded-full w-12 h-12 p-0 bg-hunter-accent hover:bg-hunter-accent/80 shadow-lg z-50"
+        size="icon"
+      >
+        <Mic className="h-5 w-5" />
+      </Button>
+
       <Card className="mb-6 overflow-hidden bg-gradient-to-r from-hunter-primary to-hunter-secondary border-hunter-accent/30">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -121,7 +145,6 @@ const Quests = () => {
         </CardContent>
       </Card>
 
-      {/* Filter buttons */}
       <div className="mb-6 flex flex-col space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -201,7 +224,6 @@ const Quests = () => {
         </div>
       </div>
 
-      {/* Quest cards grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filteredQuests.length > 0 ? (
           filteredQuests.map((quest) => (
@@ -227,7 +249,6 @@ const Quests = () => {
         )}
       </div>
 
-      {/* Refresh Quests Dialog */}
       <Dialog open={showRefreshDialog} onOpenChange={setShowRefreshDialog}>
         <DialogContent className="sm:max-w-[425px] bg-hunter-primary border-hunter-accent/30">
           <DialogHeader>
@@ -263,6 +284,11 @@ const Quests = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <VoiceAssistantSettings 
+        open={showVoiceSettings} 
+        onOpenChange={setShowVoiceSettings} 
+      />
     </Layout>
   );
 };

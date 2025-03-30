@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { Quest, QuestCategory } from '@/components/QuestCard';
+import { speak } from '@/utils/voiceAssistant';
 
 interface HunterStats {
   strength: number;
@@ -117,12 +118,22 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       setRecentChanges({});
       
-      addSystemMessage("New day, new quests! Your hunt continues...");
+      const message = "New day, new quests! Your hunt continues...";
+      addSystemMessage(message);
+      speak(message, true);
+      
       toast("[System]: Daily quests have been refreshed!", {
         description: "Complete your tasks to grow stronger!",
       });
     }
   }, []);
+
+  useEffect(() => {
+    if (isFirstVisit && hunterName) {
+      const welcomeMessage = `Welcome back, Hunter ${hunterName}! You are level ${level}. Ready to continue your journey?`;
+      speak(welcomeMessage, true);
+    }
+  }, [isFirstVisit, hunterName, level]);
 
   const completeQuest = (questId: string) => {
     setQuests((prevQuests) =>
@@ -131,6 +142,10 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           updateStats(quest.statBonus.type, quest.statBonus.value);
           const newExp = exp + quest.exp;
           setExp(newExp);
+          
+          const questCompletionMessage = `Quest completed! You gained ${quest.exp} experience and increased your ${quest.statBonus.type} by ${quest.statBonus.value}.`;
+          speak(questCompletionMessage);
+          
           if (newExp >= expToNextLevel) {
             levelUp();
           }
@@ -168,13 +183,18 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         charisma: prevStats.charisma + 1,
       }));
       
+      const levelUpMessage = `Congratulations Hunter! You've reached level ${newLevel}! All stats increased by 1.`;
       addSystemMessage(`You've reached level ${newLevel}! All stats increased by 1.`);
+      speak(levelUpMessage, true);
+      
       toast(`[System]: Level Up! You are now Level ${newLevel}`, {
         description: "All stats have increased!",
       });
       
       if (newLevel % 5 === 0) {
-        addSystemMessage(`A boss battle has appeared! Defeat it to earn special rewards.`);
+        const bossMessage = `A boss battle has appeared! Defeat it to earn special rewards.`;
+        addSystemMessage(bossMessage);
+        speak(bossMessage);
         // TODO: Implement boss battles
       }
       
@@ -327,11 +347,15 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         
         updateStats(statType, penalty);
         
-        addSystemMessage(`You failed to complete "${quest.title}". ${statType.charAt(0).toUpperCase() + statType.slice(1)} ${penalty}.`);
+        const failureMessage = `You failed to complete "${quest.title}". ${statType.charAt(0).toUpperCase() + statType.slice(1)} ${penalty}.`;
+        addSystemMessage(failureMessage);
       });
+      
+      speak(`You failed to complete ${incompleteQuests.length} quests. Some stats were reduced.`);
     }
     
     setQuests(generateQuests());
+    speak("New quests have been generated. Check them out now!");
   };
 
   const addSystemMessage = (message: string) => {
@@ -341,6 +365,14 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const setFirstVisitComplete = () => {
     setIsFirstVisit(false);
     localStorage.setItem('hunter_first_visit', 'completed');
+  };
+
+  const setHunterNameWithVoice = (name: string) => {
+    setHunterName(name);
+    
+    if (name) {
+      speak(`Welcome, Hunter ${name}! Your journey begins now.`, true);
+    }
   };
 
   return (
@@ -355,7 +387,7 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         systemMessages,
         isFirstVisit,
         hunterName,
-        setHunterName,
+        setHunterName: setHunterNameWithVoice,
         completeQuest,
         refreshQuests,
         addSystemMessage,
