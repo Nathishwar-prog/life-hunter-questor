@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
@@ -29,6 +28,8 @@ interface HunterContextType {
   quests: Quest[];
   systemMessages: string[];
   isFirstVisit: boolean;
+  hunterName: string;
+  setHunterName: (name: string) => void;
   completeQuest: (questId: string) => void;
   refreshQuests: () => void;
   addSystemMessage: (message: string) => void;
@@ -67,6 +68,10 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isFirstVisit, setIsFirstVisit] = useState<boolean>(() => {
     return localStorage.getItem('hunter_first_visit') !== 'completed';
   });
+  const [hunterName, setHunterName] = useState<string>(() => {
+    const savedName = localStorage.getItem('hunter_name');
+    return savedName || '';
+  });
 
   const expToNextLevel = level * 100;
 
@@ -86,13 +91,15 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     localStorage.setItem('hunter_quests', JSON.stringify(quests));
   }, [quests]);
 
-  // Check if quests need refreshing (every 24 hours)
+  useEffect(() => {
+    localStorage.setItem('hunter_name', hunterName);
+  }, [hunterName]);
+
   useEffect(() => {
     const lastRefresh = localStorage.getItem('hunter_last_refresh');
     const now = new Date().toISOString();
     
     if (!lastRefresh) {
-      // First time setup
       localStorage.setItem('hunter_last_refresh', now);
       return;
     }
@@ -100,7 +107,6 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const lastRefreshDate = new Date(lastRefresh);
     const currentDate = new Date();
     
-    // Check if it's a new day
     if (
       lastRefreshDate.getDate() !== currentDate.getDate() ||
       lastRefreshDate.getMonth() !== currentDate.getMonth() ||
@@ -109,10 +115,8 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       refreshQuests();
       localStorage.setItem('hunter_last_refresh', now);
       
-      // Reset stats changes
       setRecentChanges({});
       
-      // Add system message
       addSystemMessage("New day, new quests! Your hunt continues...");
       toast("[System]: Daily quests have been refreshed!", {
         description: "Complete your tasks to grow stronger!",
@@ -124,18 +128,12 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setQuests((prevQuests) =>
       prevQuests.map((quest) => {
         if (quest.id === questId && !quest.completed) {
-          // Update stats based on quest completion
           updateStats(quest.statBonus.type, quest.statBonus.value);
-          
-          // Add EXP
           const newExp = exp + quest.exp;
           setExp(newExp);
-          
-          // Check for level up
           if (newExp >= expToNextLevel) {
             levelUp();
           }
-          
           return { ...quest, completed: true };
         }
         return quest;
@@ -148,7 +146,6 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const newStats = { ...prevStats };
       newStats[statType as keyof HunterStats] += value;
       
-      // Update recent changes
       setRecentChanges((prev) => ({
         ...prev,
         [statType]: (prev[statType as keyof RecentChanges] || 0) + value,
@@ -163,7 +160,6 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const newLevel = prevLevel + 1;
       setExp(0);
       
-      // Bonus for leveling up
       setStats((prevStats) => ({
         strength: prevStats.strength + 1,
         agility: prevStats.agility + 1,
@@ -177,7 +173,6 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         description: "All stats have increased!",
       });
       
-      // Every 5 levels, trigger a boss battle
       if (newLevel % 5 === 0) {
         addSystemMessage(`A boss battle has appeared! Defeat it to earn special rewards.`);
         // TODO: Implement boss battles
@@ -188,7 +183,6 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   function generateQuests(): Quest[] {
-    // Physical quests
     const physicalQuests = [
       {
         title: "Morning Exercise Routine",
@@ -224,7 +218,6 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       },
     ];
 
-    // Mental quests
     const mentalQuests = [
       {
         title: "Mindfulness Meditation",
@@ -260,7 +253,6 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       },
     ];
 
-    // Intelligence quests
     const intelligenceQuests = [
       {
         title: "Reading Session",
@@ -296,7 +288,6 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       },
     ];
 
-    // Select random quests from each category
     const selectRandom = (arr: any[], count: number) => {
       const shuffled = [...arr].sort(() => 0.5 - Math.random());
       return shuffled.slice(0, count);
@@ -306,7 +297,6 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const selectedMental = selectRandom(mentalQuests, 1);
     const selectedIntelligence = selectRandom(intelligenceQuests, 1);
 
-    // Additional random quest from any category for variety
     const allQuests = [...physicalQuests, ...mentalQuests, ...intelligenceQuests];
     const additionalQuests = selectRandom(
       allQuests.filter(
@@ -318,7 +308,6 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       2
     );
 
-    // Combine selected quests and add IDs and completion status
     return [...selectedPhysical, ...selectedMental, ...selectedIntelligence, ...additionalQuests].map(
       (quest) => ({
         ...quest,
@@ -329,14 +318,12 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }
 
   const refreshQuests = () => {
-    // Check for any incomplete quests
     const incompleteQuests = quests.filter((quest) => !quest.completed);
     
     if (incompleteQuests.length > 0) {
-      // Apply penalties for incomplete quests
       incompleteQuests.forEach((quest) => {
         const statType = quest.statBonus.type;
-        const penalty = -1; // Small penalty
+        const penalty = -1;
         
         updateStats(statType, penalty);
         
@@ -344,7 +331,6 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
     }
     
-    // Generate new quests
     setQuests(generateQuests());
   };
 
@@ -368,6 +354,8 @@ export const HunterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         quests,
         systemMessages,
         isFirstVisit,
+        hunterName,
+        setHunterName,
         completeQuest,
         refreshQuests,
         addSystemMessage,

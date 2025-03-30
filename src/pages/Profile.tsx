@@ -1,20 +1,19 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { useHunter } from '@/context/HunterContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, Trophy, Medal, Star, ArrowRight, Shield, RefreshCw } from 'lucide-react';
+import { Award, Trophy, Medal, Star, ArrowRight, Shield, RefreshCw, Edit } from 'lucide-react';
 import { toast } from 'sonner';
+import HunterNameDialog from '@/components/HunterNameDialog';
 
 const Profile = () => {
-  const { level, stats, exp, expToNextLevel, refreshQuests } = useHunter();
+  const { level, stats, exp, expToNextLevel, refreshQuests, hunterName } = useHunter();
+  const [showNameDialog, setShowNameDialog] = useState(false);
 
-  // Generate achievements based on user level and stats
   const generateAchievements = () => {
     const achievements = [];
     
-    // Level-based achievements
     achievements.push({
       title: 'Awakening',
       description: 'Begin your journey as a hunter',
@@ -42,7 +41,6 @@ const Profile = () => {
       progress: Math.min(100, (level / 10) * 100),
     });
     
-    // Stat-based achievements
     const statAchievements = [
       {
         title: 'Physical Prowess',
@@ -88,7 +86,6 @@ const Profile = () => {
     
     achievements.push(...statAchievements);
     
-    // Special achievements
     if (Object.values(stats).every(stat => stat >= 25)) {
       achievements.push({
         title: 'Balanced Hunter',
@@ -143,7 +140,19 @@ const Profile = () => {
                     {level}
                   </span>
                 </div>
-                <CardTitle className="mt-4 text-xl">Hunter Profile</CardTitle>
+                <div className="mt-4 flex items-center gap-2">
+                  <CardTitle className="text-xl">
+                    {hunterName ? hunterName : 'Hunter Profile'}
+                  </CardTitle>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6 rounded-full" 
+                    onClick={() => setShowNameDialog(true)}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                </div>
                 <CardDescription>Level {level} Hunter</CardDescription>
               </div>
             </CardHeader>
@@ -236,6 +245,8 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      
+      <HunterNameDialog open={showNameDialog} onOpenChange={setShowNameDialog} />
     </Layout>
   );
 };

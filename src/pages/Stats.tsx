@@ -1,13 +1,24 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useHunter } from '@/context/HunterContext';
 import { Progress } from '@/components/ui/progress';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Dumbbell, Zap, Brain, Heart, MessageSquare, Trophy, ArrowUp } from 'lucide-react';
+import { Dumbbell, Zap, Brain, Heart, MessageSquare, Trophy, ArrowUp, User, Edit } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import HunterNameDialog from '@/components/HunterNameDialog';
+import { Badge } from '@/components/ui/badge';
 
 const Stats = () => {
-  const { stats, level, exp, expToNextLevel, recentChanges } = useHunter();
+  const { stats, level, exp, expToNextLevel, recentChanges, hunterName } = useHunter();
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  
+  // Show name dialog on first visit if name is not set
+  useEffect(() => {
+    if (!hunterName) {
+      setShowNameDialog(true);
+    }
+  }, [hunterName]);
 
   const statData = [
     {
@@ -66,10 +77,36 @@ const Stats = () => {
                   {level}
                 </span>
               </div>
-              <h2 className="mt-4 text-xl font-bold text-white">Hunter Level</h2>
-              <p className="text-sm text-white/60">
-                {exp} / {expToNextLevel} EXP to next level
-              </p>
+              
+              <div className="mt-4 flex flex-col items-center gap-2">
+                {hunterName ? (
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-white">{hunterName}</h2>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 rounded-full" 
+                      onClick={() => setShowNameDialog(true)}
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-sm border-hunter-accent/30 text-hunter-accent"
+                    onClick={() => setShowNameDialog(true)}
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    Set Hunter Name
+                  </Button>
+                )}
+                <Badge variant="hunter" className="text-xs">Level {level} Hunter</Badge>
+                <p className="text-sm text-white/60">
+                  {exp} / {expToNextLevel} EXP to next level
+                </p>
+              </div>
             </div>
 
             <Progress
@@ -209,6 +246,8 @@ const Stats = () => {
           </div>
         </div>
       </div>
+      
+      <HunterNameDialog open={showNameDialog} onOpenChange={setShowNameDialog} />
     </Layout>
   );
 };
