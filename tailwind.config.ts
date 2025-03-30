@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,18 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Solo Leveling inspired colors
+				hunter: {
+					primary: '#2D3250',
+					secondary: '#424769',
+					accent: '#7077A1',
+					highlight: '#8D8FAD',
+					blue: '#6272D9',
+					purple: '#9256E5',
+					danger: '#FF4561',
+					success: '#36DE7E',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -70,27 +82,74 @@ export default {
 			},
 			keyframes: {
 				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
+					from: { height: '0' },
+					to: { height: 'var(--radix-accordion-content-height)' },
 				},
 				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
+					from: { height: 'var(--radix-accordion-content-height)' },
+					to: { height: '0' },
+				},
+				'pulse-glow': {
+					'0%, 100%': {
+						opacity: '1',
+						boxShadow: '0 0 10px rgba(146, 86, 229, 0.7)'
 					},
-					to: {
-						height: '0'
-					}
-				}
+					'50%': {
+						opacity: '0.7',
+						boxShadow: '0 0 20px rgba(146, 86, 229, 0.9)'
+					},
+				},
+				'float': {
+					'0%, 100%': {
+						transform: 'translateY(0)',
+					},
+					'50%': {
+						transform: 'translateY(-10px)',
+					},
+				},
+				'stat-increase': {
+					'0%': {
+						transform: 'scale(1)',
+						color: 'white',
+					},
+					'50%': {
+						transform: 'scale(1.2)',
+						color: '#36DE7E',
+					},
+					'100%': {
+						transform: 'scale(1)',
+						color: 'white',
+					},
+				},
+				'stat-decrease': {
+					'0%': {
+						transform: 'scale(1)',
+						color: 'white',
+					},
+					'50%': {
+						transform: 'scale(1.2)',
+						color: '#FF4561',
+					},
+					'100%': {
+						transform: 'scale(1)',
+						color: 'white',
+					},
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
-		}
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-glow': 'pulse-glow 2s infinite',
+				'float': 'float 3s ease-in-out infinite',
+				'stat-increase': 'stat-increase 1s forwards',
+				'stat-decrease': 'stat-decrease 1s forwards',
+			},
+			backgroundImage: {
+				'hunter-gradient': 'linear-gradient(135deg, #2D3250 0%, #424769 100%)',
+				'quest-gradient': 'linear-gradient(135deg, rgba(45, 50, 80, 0.9) 0%, rgba(66, 71, 105, 0.9) 100%)',
+				'card-highlight': 'linear-gradient(135deg, rgba(98, 114, 217, 0.1) 0%, rgba(146, 86, 229, 0.1) 100%)',
+			},
+		},
 	},
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;
